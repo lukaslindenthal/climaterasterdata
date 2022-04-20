@@ -1,0 +1,90 @@
+
+# Script: Rasterdata Climate change
+# Author: L.Lindenthal
+
+#please set working directory
+setwd("")
+
+#install necessary package
+
+# install.packages(c("geonames"))  
+# install.packages("raster")
+# install.packages("maps")
+# install.packages("sp")   
+
+
+library(sp)
+library(maps)
+library(raster)
+
+#set coordinates for positon. Here I chose Ushuaia, Argentina
+
+# Ushuaia == 54Â° 48â² S, 68Â° 18â² W 
+
+
+# data of historical climate data -----------------------------------------
+
+histclim_data_min <- stack(dir("wc2-2", full.names = TRUE))
+histclim_data_min
+
+par(mfrow = c(1, 1))
+plot(histclim_data_min[[1]])
+
+
+histclim_data_max <- stack(dir("wc2-3", full.names = TRUE))
+histclim_data_max
+
+plot(histclim_data_max[[1]])
+
+
+# data of future climate adoption -----------------------------------------
+#load data
+
+stack("world_clim_fut/wc2.1_2.5m_tmin_BCC-CSM2-MR_ssp126_2041-2060.tif")
+
+futclim_data_min <- stack("world_clim_fut/wc2.1_2.5m_tmin_BCC-CSM2-MR_ssp126_2041-2060.tif")
+
+futclim_data_max <- stack("world_clim_fut/wc2.1_2.5m_tmin_BCC-CSM2-MR_ssp126_2041-2060.tif")
+
+
+
+grid <- matrix(c(1, 1, 2, 3 ), nrow = 2, ncol = 2, byrow = TRUE)  #create grid of plot, to see correlation
+layout(grid)
+
+# function to estimate change in climate for certain cities# --------------
+
+funct_clim_calc <- function(city, histclim_data_min, histclim_data_max, futclim_data_min, futclim_data_max)
+  
+  coordinates = cbind(world.cities[which(world.cities$name == "city"), c(5, 4)])[1, ]
+  result = list()
+  
+  
+# coordinate data of climateraster; by using "extract"
+  ext_histclim_data_min <- extract(x = histclim_data_min, y = coordinates)
+  ext_histclim_data_max <- extract(x = histclim_data_max, y = coordinates)
+  ext_futclim_data_min <- extract(x = futclim_data_min, y = coordinates)
+  ext_futclim_data_max <- extract(x = futclim_data_max, y = coordinates)
+  
+  result_clim_max_diff <- ext_futclim_data_max - ext_histclim_data_max  #temp. difference future and now; minimum and maximum
+  result_clim_min_diff <- ext_futclim_data_min - ext_histclim_data_min
+  
+
+  plot(1:12, result_clim_max_diff, col = 34, type = "l", lwd = 4,
+       xlab = "month", ylab = "temp. difference [CÂ°]", 
+       ylim = c(0, 3), main = city)
+  lines(1, 12, result_clim_min_diff, col = 29, lwd = 4,
+        xlab = "month", ylab = "temp. difference [CÂ°]",
+        ylim = c(0, 3), main = city)
+  
+
+#   plot(histclim_data_min[[1]])
+#   
+#   plot(histclim_data_max[[1]])
+# }
+
+clim_monster <- funct_clim_calc("A Coruna", histclim_data_min, histclim_data_max, futclim_data_min, futclim_data_max)
+
+par(mfrow = c(1, 1))
+
+
+
